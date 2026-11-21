@@ -1,0 +1,76 @@
+{
+  "id": "com.github.morraycage.read-receipts",
+  "name": "Read Receipts",
+  "description": "Sent, delivered and seen status on messages from chosen senders, with per-recipient detail.",
+  "homepage_url": "https://github.com/Morraycage/mattermost-plugin-read-receipts",
+  "version": "0.1.0",
+  "min_server_version": "10.0.0",
+  "server": {
+    "executables": {
+      "linux-amd64": "server/dist/plugin-linux-amd64",
+      "linux-arm64": "server/dist/plugin-linux-arm64"
+    }
+  },
+  "webapp": {
+    "bundle_path": "webapp/dist/main.js"
+  },
+  "settings_schema": {
+    "header": "Receipts are tracked only for messages sent by the senders listed below. Recipients see a small notice on those messages.",
+    "footer": "Delivered: the recipient had Mattermost open (web, desktop or mobile app connected) after the message was sent. Seen: the recipient opened the conversation with the window in focus after the message was sent. Neither proves the text was read.",
+    "settings": [
+      {
+        "key": "SenderUsernames",
+        "display_name": "Senders (usernames)",
+        "type": "text",
+        "help_text": "Comma-separated usernames whose messages get receipts, for example: alice, hr.team",
+        "default": ""
+      },
+      {
+        "key": "SenderRoles",
+        "display_name": "Senders (roles)",
+        "type": "text",
+        "help_text": "Comma-separated role names whose members get receipts, for example: system_admin. Leave empty to use only the usernames above.",
+        "default": ""
+      },
+      {
+        "key": "TrackDirect",
+        "display_name": "Direct messages",
+        "type": "bool",
+        "default": true
+      },
+      {
+        "key": "TrackGroup",
+        "display_name": "Group messages",
+        "type": "bool",
+        "default": true
+      },
+      {
+        "key": "TrackChannels",
+        "display_name": "Public and private channels",
+        "type": "bool",
+        "default": false
+      },
+      {
+        "key": "MaxRecipients",
+        "display_name": "Maximum recipients",
+        "type": "number",
+        "help_text": "Messages in conversations with more recipients than this are not tracked.",
+        "default": 50
+      },
+      {
+        "key": "RetentionDays",
+        "display_name": "Retention (days)",
+        "type": "number",
+        "help_text": "Receipts are kept this long, then deleted.",
+        "default": 30
+      },
+      {
+        "key": "ShowRecipientNotice",
+        "display_name": "Tell recipients",
+        "type": "bool",
+        "help_text": "Show recipients a small \"read receipt\" mark on tracked messages. Keep on: people should know when their reading is reported.",
+        "default": true
+      }
+    ]
+  }
+}

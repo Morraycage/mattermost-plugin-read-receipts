@@ -1,0 +1,10 @@
+{
+  "name": "mattermost-plugin-read-receipts-webapp",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/index.jsx --bundle --minify --format=iife --target=es2020 --jsx-factory=React.createElement --jsx-fragment=React.Fragment --outfile=dist/main.js"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.0"
+  }
+}

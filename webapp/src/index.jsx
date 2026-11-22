@@ -1,5 +1,6 @@
 const React = window.React;
-const {useEffect, useState} = React;
+const {useEffect, useRef, useState} = React;
+const ReactDOM = window.ReactDOM;
 
 const PLUGIN_ID = 'com.github.morraycage.read-receipts';
 const PROP = 'read_receipt';
@@ -142,65 +143,93 @@ function fmt(ms) {
     return d.toDateString() === today.toDateString() ? t : `${d.toLocaleDateString([], {day: 'numeric', month: 'short'})} ${t}`;
 }
 
+function summary(v) {
+    const all = v.total;
+    if (v.seen === all) {
+        return {label: all === 1 ? 'Seen' : 'Seen by everyone', color: C.blue, double: true};
+    }
+    if (v.seen > 0) {
+        return {label: `Seen by ${v.seen} of ${all}`, color: C.blue, double: true};
+    }
+    if (v.delivered > 0) {
+        return {label: all === 1 ? 'Delivered' : `Delivered to ${v.delivered} of ${all}`, color: C.grey, double: true};
+    }
+    return {label: 'Sent', color: C.grey, double: false};
+}
+
+// The post body clips overflow, so the detail is drawn in a fixed layer on
+// <body>, above the ticks, or below them near the top of the window.
+function Detail({v, label, anchor}) {
+    const r = anchor.getBoundingClientRect();
+    const pos = r.top > 220 ? {bottom: window.innerHeight - r.top + 4} : {top: r.bottom + 4};
+    const box = (
+        <div
+            role='tooltip'
+            style={{
+                position: 'fixed', right: Math.max(8, window.innerWidth - r.right), ...pos, zIndex: 1000,
+                fontSize: 12, lineHeight: '16px', background: 'var(--center-channel-bg, #fff)', color: 'var(--center-channel-color)',
+                border: '1px solid rgba(var(--center-channel-color-rgb), 0.16)', borderRadius: 4,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)', padding: '6px 10px', whiteSpace: 'nowrap', pointerEvents: 'none',
+            }}
+        >
+            <div style={{fontWeight: 600, marginBottom: v.recipients.length ? 4 : 0}}>{label}</div>
+            <div style={{display: 'grid', gridTemplateColumns: 'max-content max-content', columnGap: 16, rowGap: 2}}>
+                {v.recipients.map((x) => (
+                    <React.Fragment key={x.user_id}>
+                        <span>{x.name || x.username}</span>
+                        {x.seen_at ? <span style={{color: C.blue}}>Seen {fmt(x.seen_at)}</span> : <span style={{color: C.grey}}>{x.delivered_at ? `Delivered ${fmt(x.delivered_at)}` : 'Not delivered yet'}</span>}
+                    </React.Fragment>
+                ))}
+            </div>
+        </div>
+    );
+    return ReactDOM && ReactDOM.createPortal ? ReactDOM.createPortal(box, document.body) : box;
+}
+
+// Only the ticks are shown, like other messengers; the detail opens on hover
+// (or on click / Enter, which also keeps it open).
 function SenderStatus({post}) {
     const v = useReceipt(post.id);
-    const [open, setOpen] = useState(false);
+    const [hover, setHover] = useState(false);
+    const [pinned, setPinned] = useState(false);
+    const anchor = useRef(null);
     if (!v) {
         return null;
     }
-    const all = v.total;
-    let label;
-    let color = C.grey;
-    let double = true;
-    if (v.seen === all) {
-        label = all === 1 ? 'Seen' : 'Seen by everyone';
-        color = C.blue;
-    } else if (v.seen > 0) {
-        label = `Seen by ${v.seen} of ${all}`;
-        color = C.blue;
-    } else if (v.delivered > 0) {
-        label = all === 1 ? 'Delivered' : `Delivered to ${v.delivered} of ${all}`;
-    } else {
-        label = 'Sent';
-        double = false;
-    }
-    const single = all === 1 ? v.recipients[0] : null;
-    const when = single ? fmt(single.seen_at || single.delivered_at) : '';
+    const {label, color, double} = summary(v);
+    const open = hover || pinned;
 
     return (
-        <div style={{fontSize: 12, color: C.grey, marginTop: 2, userSelect: 'none'}}>
+        <div style={{position: 'relative', height: 0, fontSize: 12, lineHeight: '14px', userSelect: 'none'}}>
             <span
+                ref={anchor}
                 role='button'
                 tabIndex={0}
-                onClick={() => setOpen(!open)}
-                onKeyDown={(e) => e.key === 'Enter' && setOpen(!open)}
-                style={{cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4}}
-                title='Show who received and saw this message'
+                aria-label={label}
+                aria-expanded={open}
+                onClick={() => setPinned(!pinned)}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setPinned(!pinned)}
+                onMouseEnter={() => setHover(true)}
+                onMouseLeave={() => setHover(false)}
+                onBlur={() => setPinned(false)}
+                style={{cursor: 'pointer', position: 'absolute', right: 0, bottom: 3, display: 'inline-flex', alignItems: 'center', padding: '1px 2px'}}
             >
                 <Ticks double={double} color={color}/>
-                <span>{label}{when ? ` · ${when}` : ''}</span>
+                {open && anchor.current && <Detail v={v} label={label} anchor={anchor.current}/>}
             </span>
-            {open && (
-                <div style={{display: 'grid', gridTemplateColumns: 'max-content max-content', columnGap: 16, rowGap: 2, marginTop: 4, paddingLeft: 22}}>
-                    {v.recipients.map((r) => (
-                        <React.Fragment key={r.user_id}>
-                            <span style={{color: 'var(--center-channel-color)'}}>{r.name || r.username}</span>
-                            {r.seen_at ? <span style={{color: C.blue}}>Seen {fmt(r.seen_at)}</span> : <span>{r.delivered_at ? `Delivered ${fmt(r.delivered_at)}` : 'Not delivered yet'}</span>}
-                        </React.Fragment>
-                    ))}
-                </div>
-            )}
         </div>
     );
 }
 
 function RecipientNotice() {
+    const text = 'Read receipt on: the sender sees when this message reaches you and when you open the conversation.';
     return (
-        <div style={{fontSize: 11, color: C.grey, marginTop: 2}} title='The sender sees when this message reaches you and when you open the conversation.'>
-            <svg width='12' height='12' viewBox='0 0 24 24' style={{verticalAlign: '-2px', marginRight: 4}} aria-hidden='true'>
-                <path d='M12 5C6.5 5 2.7 9.3 1.5 12c1.2 2.7 5 7 10.5 7s9.3-4.3 10.5-7C21.3 9.3 17.5 5 12 5zm0 11a4 4 0 110-8 4 4 0 010 8z' fill='currentColor'/>
-            </svg>
-            Read receipt on
+        <div style={{position: 'relative', height: 0, lineHeight: '14px', color: C.grey}}>
+            <span title={text} aria-label={text} role='img' style={{position: 'absolute', right: 0, bottom: 3, display: 'inline-flex', padding: '1px 2px', cursor: 'help', opacity: 0.7}}>
+                <svg width='12' height='12' viewBox='0 0 24 24' aria-hidden='true'>
+                    <path d='M12 5C6.5 5 2.7 9.3 1.5 12c1.2 2.7 5 7 10.5 7s9.3-4.3 10.5-7C21.3 9.3 17.5 5 12 5zm0 11a4 4 0 110-8 4 4 0 010 8z' fill='currentColor'/>
+                </svg>
+            </span>
         </div>
     );
 }

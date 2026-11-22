@@ -2,19 +2,19 @@
 
 Sent, delivered and seen status on Mattermost messages, with the detail per recipient. Works on every edition, including the free Team Edition.
 
-![Sender view: seen by 1 of 3, with the detail per recipient](assets/sender.png)
+![Sender view: ticks on the right, detail on hover](assets/sender.png)
 
-Recipients see that the message is tracked:
+Recipients see a small eye on tracked messages:
 
-![Recipient view: Read receipt on](assets/recipient.png)
+![Recipient view: small eye on the right](assets/recipient.png)
 
 ## Features
 
-- Sent, Delivered and Seen ticks under your own messages, updated live.
-- Click the ticks to see every recipient with the time they received and saw the message.
+- Sent, Delivered and Seen ticks on the right of your own messages, updated live, without adding a line.
+- Hover the ticks to see every recipient with the time they received and saw the message (click to keep it open).
 - Direct messages and group messages, public and private channels optional.
 - You choose whose messages are tracked: by username, by role, or everyone (`system_user`).
-- Recipients see a small "Read receipt on" mark, so nobody is tracked without knowing.
+- Recipients see a small eye on tracked messages (with an explanation on hover), so nobody is tracked without knowing.
 - Only the sender can read the receipts of their messages.
 - Mobile apps count as seen through the channel's last viewed time.
 - Receipts expire after a configurable number of days.
@@ -61,19 +61,19 @@ System Console > Plugins > Read Receipts:
 | Public and private channels | off | Track channel posts. |
 | Maximum recipients | 50 | Larger conversations are not tracked. |
 | Retention (days) | 30 | Receipts are deleted after this. |
-| Tell recipients | on | Show "Read receipt on" under tracked messages. |
+| Tell recipients | on | Show a small eye on tracked messages. |
 
 Nobody is tracked until you list senders or roles. Bots are never tracked.
 
 ## Usage
 
-Send a message as a tracked sender. Under it:
+Send a message as a tracked sender. On its right:
 
 - one grey tick: sent;
 - two grey ticks: delivered to at least one recipient;
-- two blue ticks: seen, with "Seen by N of M" in groups.
+- two blue ticks: seen (by at least one recipient in groups).
 
-Click the line to open the list of recipients with their times.
+Hover the ticks for "Seen by N of M" and the list of recipients with their times.
 
 ### Mobile apps
 

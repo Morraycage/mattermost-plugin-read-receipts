@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0
+
+- Compact display: only the ticks, on the right of the message, with no extra line. The detail opens on hover.
+- Recipients see a small eye instead of the "Read receipt on" text.
+
 ## 0.3.0
 
 - `/receipts` slash command: the status of your last messages in a conversation, as a reply only you see. It works in the mobile apps, which do not run plugin code.

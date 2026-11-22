@@ -85,6 +85,9 @@ func (p *Plugin) OnConfigurationChange() error {
 	p.cfgLock.Lock()
 	p.cfg, p.senderIDs, p.roles = cfg, ids, roles
 	p.cfgLock.Unlock()
+	p.API.LogInfo("configuration loaded",
+		"senders", len(ids), "roles", strings.Join(splitList(cfg.SenderRoles), ","),
+		"direct", cfg.TrackDirect, "group", cfg.TrackGroup, "channels", cfg.TrackChannels)
 	return nil
 }
 
@@ -93,6 +96,7 @@ func (p *Plugin) OnActivate() error {
 	p.stop = make(chan struct{})
 	p.done = make(chan struct{})
 	go p.sweepLoop()
+	p.API.LogInfo("read receipts activated")
 	return nil
 }
 

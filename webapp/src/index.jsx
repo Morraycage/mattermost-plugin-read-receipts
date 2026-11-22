@@ -158,15 +158,29 @@ function summary(v) {
 }
 
 // The post body clips overflow, so the detail is drawn in a fixed layer on
-// <body>, above the ticks, or below them near the top of the window.
+// <body>. It opens below the ticks so it never covers the post's hover menu
+// (reactions, reply...), which sits above them. Without room below, it opens
+// above the post and its menu.
 function Detail({v, label, anchor}) {
     const r = anchor.getBoundingClientRect();
-    const pos = r.top > 220 ? {bottom: window.innerHeight - r.top + 4} : {top: r.bottom + 4};
+    const height = 28 + (18 * v.recipients.length);
+    const view = anchor.closest('.post-list__dynamic, .post-list__content') || document.documentElement;
+    const limit = Math.min(window.innerHeight, view.getBoundingClientRect().bottom);
+    let pos;
+    if (r.bottom + 4 + height <= limit) {
+        pos = {top: r.bottom + 4, right: Math.max(8, window.innerWidth - r.right)};
+    } else {
+        // The hover menu straddles the top edge of the post (about 30 px above
+        // it), and may not be rendered yet: clear that band.
+        const post = anchor.closest('.post');
+        const top = post ? post.getBoundingClientRect().top : r.top;
+        pos = {bottom: window.innerHeight - top + 30, right: Math.max(8, window.innerWidth - r.right)};
+    }
     const box = (
         <div
             role='tooltip'
             style={{
-                position: 'fixed', right: Math.max(8, window.innerWidth - r.right), ...pos, zIndex: 1000,
+                position: 'fixed', ...pos, zIndex: 1000,
                 fontSize: 12, lineHeight: '16px', background: 'var(--center-channel-bg, #fff)', color: 'var(--center-channel-color)',
                 border: '1px solid rgba(var(--center-channel-color-rgb), 0.16)', borderRadius: 4,
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)', padding: '6px 10px', whiteSpace: 'nowrap', pointerEvents: 'none',
@@ -193,11 +207,27 @@ function SenderStatus({post}) {
     const [hover, setHover] = useState(false);
     const [pinned, setPinned] = useState(false);
     const anchor = useRef(null);
+    const open = hover || pinned;
+    useEffect(() => {
+        if (!open) {
+            return undefined;
+        }
+        // The bubble is fixed on the page: close it when the list moves.
+        const close = () => {
+            setHover(false);
+            setPinned(false);
+        };
+        window.addEventListener('scroll', close, true);
+        window.addEventListener('resize', close);
+        return () => {
+            window.removeEventListener('scroll', close, true);
+            window.removeEventListener('resize', close);
+        };
+    }, [open]);
     if (!v) {
         return null;
     }
     const {label, color, double} = summary(v);
-    const open = hover || pinned;
 
     return (
         <div style={{position: 'relative', height: 0, fontSize: 12, lineHeight: '14px', userSelect: 'none'}}>

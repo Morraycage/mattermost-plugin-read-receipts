@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1
+
+- The detail opens below the ticks, so it no longer covers the message's reaction and reply buttons. On the last message it opens above them.
+- The detail closes when the conversation scrolls.
+
 ## 0.4.0
 
 - Compact display: only the ticks, on the right of the message, with no extra line. The detail opens on hover.

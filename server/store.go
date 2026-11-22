@@ -145,7 +145,7 @@ func (r *Receipt) view(p *Plugin) ReceiptView {
 		ids = append(ids, id)
 	}
 	names := map[string]*model.User{}
-	if users, appErr := p.API.GetUsersByIds(ids); appErr == nil {
+	if users, appErr := p.usersByIds(ids); appErr == nil {
 		for _, u := range users {
 			names[u.Id] = u
 		}
@@ -173,4 +173,27 @@ func (r *Receipt) view(p *Plugin) ReceiptView {
 		return a.Username < b.Username
 	})
 	return v
+}
+
+// usersByIds wraps GetUsersByIds, which servers before 9.x do not have: the
+// RPC then fails silently with an empty list, so fall back to one call per id.
+func (p *Plugin) usersByIds(ids []string) ([]*model.User, *model.AppError) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	if users, appErr := p.API.GetUsersByIds(ids); appErr == nil && len(users) > 0 {
+		return users, nil
+	}
+	var out []*model.User
+	for _, id := range ids {
+		u, appErr := p.API.GetUser(id)
+		if appErr != nil {
+			if appErr.StatusCode == 404 {
+				continue
+			}
+			return nil, appErr
+		}
+		out = append(out, u)
+	}
+	return out, nil
 }

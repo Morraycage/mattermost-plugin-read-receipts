@@ -92,6 +92,9 @@ func (p *Plugin) OnConfigurationChange() error {
 }
 
 func (p *Plugin) OnActivate() error {
+	if err := p.registerCommand(); err != nil {
+		return err
+	}
 	p.conns = map[string]int{}
 	p.stop = make(chan struct{})
 	p.done = make(chan struct{})
@@ -171,7 +174,7 @@ func (p *Plugin) recipientsFor(post *model.Post) []string {
 		return nil
 	}
 
-	users, appErr := p.API.GetUsersByIds(ids)
+	users, appErr := p.usersByIds(ids)
 	if appErr != nil {
 		return nil
 	}

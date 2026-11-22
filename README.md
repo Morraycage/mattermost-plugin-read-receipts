@@ -18,6 +18,7 @@ Recipients see that the message is tracked:
 - Only the sender can read the receipts of their messages.
 - Mobile apps count as seen through the channel's last viewed time.
 - Receipts expire after a configurable number of days.
+- `/receipts` shows the same status as text, including in the mobile apps.
 
 ## Statuses
 
@@ -31,7 +32,7 @@ None of these proves the text was read.
 
 ## Requirements
 
-- Mattermost 10.0 or later, any edition.
+- Mattermost 6.0 or later, any edition. Tested on 6.3, 7.8, 8.1, 9.11 and 11.11.
 - Linux amd64 or arm64 server.
 - Single node. High Availability clusters are not supported yet (see Limitations).
 
@@ -74,9 +75,14 @@ Send a message as a tracked sender. Under it:
 
 Click the line to open the list of recipients with their times.
 
+### Mobile apps
+
+The mobile apps do not run plugin code, so the ticks do not show there. Type `/receipts` in the conversation instead: you get the status of your last 5 tracked messages, visible only to you. `/receipts 10` shows the last 10 (up to 20).
+
 ## Troubleshooting
 
 - **No ticks under my messages**: check that your username or one of your roles is in the settings, and that the conversation type is enabled. Only messages sent after the plugin was enabled are tracked.
+- **No ticks in the mobile app**: expected, use `/receipts`.
 - **Stuck on Delivered on mobile**: the mobile app does not run plugin code; the seen status comes from a check every 30 s of the channel's last viewed time.
 - **Large groups not tracked**: raise Maximum recipients.
 - **Logs**: the plugin logs its configuration when it loads and every storage error. Look for `com.github.morraycage.read-receipts` in the server log.
@@ -93,6 +99,7 @@ Click the line to open the list of recipients with their times.
 
 - Single node only: state changes are serialised by an in-process lock.
 - Messages sent before the plugin was enabled have no receipt.
+- Before Mattermost 9.x the server does not tell plugins about deleted messages: their receipts are never shown but stay stored until the retention ends.
 
 ## Development
 
@@ -102,7 +109,7 @@ Needs Go 1.22+ and Node 20+.
 make            # dist/com.github.morraycage.read-receipts-<version>.tar.gz
 ```
 
-`test/compose.yml` starts a throwaway Mattermost on http://localhost:8065. `test/e2e.mjs` creates test users, installs the bundle and checks every status:
+`test/compose.yml` starts a throwaway Mattermost on http://localhost:8065 (`MM_VERSION=8.1.0` to test another version). `test/e2e.mjs` creates test users, installs the bundle and checks every status:
 
 ```
 docker compose -p rrdev -f test/compose.yml up -d

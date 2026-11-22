@@ -41,6 +41,8 @@ for (const u of USERS) {
     ID[u] = (await res.json()).id;
 }
 const admin = T.hr; // first user created is system admin
+const MAJOR = parseInt((await api(admin, 'GET', '/config/client?format=old')).data.Version, 10);
+console.log(`server ${MAJOR}.x`);
 
 // Install the bundle.
 const form = new FormData();
@@ -123,6 +125,12 @@ for (let i = 0; i < 40 && !swept; i++) {
 }
 check('GM receipt: bob seen through the sweep fallback', swept, JSON.stringify({d: r.delivered, s: r.seen}));
 
+// 7b. /receipts gives the same status as text, for the mobile apps.
+const cmd = (await api(T.hr, 'POST', '/commands/execute', {channel_id: gm.id, team_id: team.id, command: '/receipts'})).data;
+check('/receipts lists the GM status', /Seen by 1 of 3/.test(cmd.text) && /Seen: .*bob/.test(cmd.text) && /gm test/.test(cmd.text), JSON.stringify(cmd.text));
+const cmdA = (await api(T.alice, 'POST', '/commands/execute', {channel_id: gm.id, team_id: team.id, command: '/receipts'})).data;
+check('/receipts shows nothing of other senders', /None of your recent messages/.test(cmdA.text));
+
 // 8. Public channels are off by default.
 const p3 = (await api(T.hr, 'POST', '/posts', {channel_id: pub.id, message: 'channel test'})).data;
 check('public channel post not tracked', !p3.props?.read_receipt);
@@ -136,7 +144,9 @@ check('message from a non-sender not tracked', !p4.props?.read_receipt);
 await api(T.hr, 'DELETE', `/posts/${p1.id}`);
 await sleep(300);
 const gone = await plug(T.hr, 'GET', `/receipts?post_ids=${p1.id}`);
-check('receipt removed with the post', Object.keys(gone).length === 0);
+// MessageHasBeenDeleted only exists from 9.x; before that the receipt just expires.
+if (MAJOR >= 9) check('receipt removed with the post', Object.keys(gone).length === 0);
+else console.log('SKIP  receipt removed with the post (no delete hook before 9.x)');
 
 ws.close(); wsA.close();
 console.log(ok ? '\nALL PASS' : '\nSOME FAILED');

@@ -3,7 +3,7 @@ services:
     image: postgres:15-alpine
     environment: {POSTGRES_USER: mm, POSTGRES_PASSWORD: mmdev, POSTGRES_DB: mattermost}
   mm:
-    image: mattermost/mattermost-team-edition:11.11.1
+    image: mattermost/mattermost-team-edition:${MM_VERSION:-11.11.1}
     platform: linux/amd64
     depends_on: [db]
     ports: ["127.0.0.1:8065:8065"]
